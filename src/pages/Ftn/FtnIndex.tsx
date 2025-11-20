@@ -8,10 +8,12 @@ import { FtnTable } from "../../components/FtnTable/FtnTable";
 import { AdvancedFilters } from "../../components/Filters/AndvancedFilters";
 import { usePlatformsMetrics } from "../../hooks/usePlatformsMetrics";
 import { useNavigate } from "react-router-dom";
+import { FtnExitsForm } from "../../components/FtnExitsForm/FtnExitsForm";
 // import { MetricsDashboard } from "../../components/Dashboard/MetricsDashboard";
 
 export const FtnIndex = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isModalOpenExits, setIsModalOpenExits] = useState(false);
     const [editing, setEditing] = useState<StageEntrance | null>(null);
     const [filters, setFilters] = useState<any>({});
 
@@ -24,7 +26,6 @@ export const FtnIndex = () => {
     const filteredData = dataMetrics?.filter(item => {
         if (filters.estado === 'activos' && item.exitDate) return false;
         if (filters.estado === 'completados' && !item.exitDate) return false;
-        if (filters.folio && !item.folio.includes(filters.folio)) return false;
         if (filters.partNumber && !item.partNumber.includes(filters.partNumber)) return false;
         if (filters.fechaInicio && new Date(item.entryDate) < new Date(filters.fechaInicio)) return false;
         if (filters.fechaFin && new Date(item.entryDate) > new Date(filters.fechaFin)) return false;
@@ -36,11 +37,18 @@ export const FtnIndex = () => {
         setIsModalOpen(true);
     };
 
+    const handleOpenModalExits = () => {
+        setIsModalOpenExits(true);
+    };
+
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setEditing(null);
     };
 
+    const handleCloseModalExits = () => {
+        setIsModalOpenExits(false);
+    };
     const handleCreate = () => {
         handleOpenModal(null);
     };
@@ -72,6 +80,7 @@ export const FtnIndex = () => {
                 Reportes
             </button>
             <button
+                onClick={handleOpenModalExits}
                 className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors 
                     duration-200 shadow-md flex items-center hover:cursor-pointer"
             >
@@ -169,6 +178,14 @@ export const FtnIndex = () => {
                     onSuccess={handleFormSuccess}
                     onCancel={handleCloseModal}
                 />
+            </Modal>
+
+            <Modal
+                isOpen={isModalOpenExits}
+                onClose={handleCloseModalExits}
+                title="SALIDAS"
+            >
+                <FtnExitsForm />
             </Modal>
         </div>
     );
