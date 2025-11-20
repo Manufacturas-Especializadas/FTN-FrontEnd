@@ -57,7 +57,7 @@ export const DeleteConfirmationModal = ({
                         <div className="flex items-center">
                             <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center mr-3">
                                 <span className="text-red-600 font-semibold text-sm">
-                                    {platform.folio.charAt(0).toUpperCase()}
+                                    {platform.folio}
                                 </span>
                             </div>
                             <div>

@@ -24,7 +24,7 @@ interface UseFtnFormReturn {
 
 export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnFormReturn => {
     const [formData, setFormData] = useState<FtnFormData>({
-        folio: "",
+        folio: 0,
         partNumber: "",
         numberOfPieces: 0,
         entryDate: ""
@@ -45,7 +45,7 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
             }
 
             setFormData({
-                folio: platform.folio || "",
+                folio: platform.folio || 0,
                 partNumber: platform.partNumber || "",
                 numberOfPieces: platform.numberOfPieces || 0,
                 entryDate: platform.entryDate || ""
@@ -95,7 +95,7 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
     };
 
     const validateForm = (): boolean => {
-        if (!formData.folio?.trim()) {
+        if (!formData.folio) {
             setError("El folio es requerido");
             return false;
         }
@@ -126,7 +126,7 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
 
     const resetForm = () => {
         setFormData({
-            folio: "",
+            folio: 0,
             partNumber: "",
             numberOfPieces: 0,
             entryDate: ""

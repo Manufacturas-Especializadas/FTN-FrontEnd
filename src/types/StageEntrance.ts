@@ -1,6 +1,6 @@
 export interface StageEntrance {
     id: number;
-    folio: string;
+    folio: number;
     partNumber: string;
     platforms: number;
     numberOfPieces: number;
