@@ -1,9 +1,10 @@
 import { API_CONFIG } from "../../config/api";
+import type { SearchResult } from "../../hooks/useStageExits";
 import type { StageEntrance } from "../../types/StageEntrance";
 import { apiClient } from "../client";
 
 export interface FtnFormData {
-    folio: string;
+    folio: number;
     partNumber: string;
     numberOfPieces: number;
     entryDate: string;
@@ -53,6 +54,7 @@ export interface RecordDetail {
 
 class FtnService {
     private getStageEntranceEndpoint = API_CONFIG.endpoints.ftn.getStageEntrance;
+    private searchByPartNumberEndpoint = API_CONFIG.endpoints.ftn.searchByPartNumber;
     private createEndpoint = API_CONFIG.endpoints.ftn.create;
     private updateEndpoint = API_CONFIG.endpoints.ftn.update;
     private patchEndpoint = API_CONFIG.endpoints.ftn.patch;
@@ -60,6 +62,10 @@ class FtnService {
 
     async getStageEntrance(): Promise<StageEntrance[]> {
         return apiClient.get<StageEntrance[]>(this.getStageEntranceEndpoint);
+    };
+
+    async searchByPartNumber(partNumber: string): Promise<SearchResult[]> {
+        return apiClient.get<SearchResult[]>(`${this.searchByPartNumberEndpoint}${encodeURIComponent(partNumber)}`);
     };
 
     async create(formData: FtnFormData): Promise<FtnResponse> {
