@@ -3,8 +3,6 @@ import type { StageEntrance } from "../../types/StageEntrance";
 import { useDeleteModal } from "../../hooks/useDeleteModal";
 import { ftnService } from "../../api/services/FtnService";
 import { formatDateTime } from "../../utils/dateFormatter";
-import { Modal } from "../Modal/Modal";
-import { FtnExitForm } from "../FtnExitForm/FtnExitForm";
 import { DeleteConfirmationModal } from "../DeleteConfirmModal/DeleteConfirmModal";
 import { usePlatformsMetrics } from "../../hooks/usePlatformsMetrics";
 
@@ -15,11 +13,9 @@ interface Props {
     onExit?: () => void;
 };
 
-export const FtnTable = ({ data, onDelete, onEdit, onExit }: Props) => {
+export const FtnTable = ({ data, onDelete, onEdit }: Props) => {
     const { dataMetrics } = usePlatformsMetrics(data);
     const [currentPage, setCurrentPage] = useState(1);
-    const [isExitModalOpen, setIsExitModalOpen] = useState(false);
-    const [selectedPlatform, setSelectedPlatform] = useState<StageEntrance | null>(null);
     const itemsPerPage = 10;
 
     const {
@@ -75,23 +71,6 @@ export const FtnTable = ({ data, onDelete, onEdit, onExit }: Props) => {
     const handleEdit = (platform: StageEntrance) => {
         if (onEdit) {
             onEdit(platform);
-        }
-    };
-
-    // const handleOpenExitModal = (platform: StageEntrance) => {
-    //     setSelectedPlatform(platform);
-    //     setIsExitModalOpen(true);
-    // };
-
-    const handleCloseExitModal = () => {
-        setIsExitModalOpen(false);
-        setSelectedPlatform(null);
-    };
-
-    const handleExitSuccess = () => {
-        handleCloseExitModal();
-        if (onExit) {
-            onExit();
         }
     };
 
@@ -162,16 +141,6 @@ export const FtnTable = ({ data, onDelete, onEdit, onExit }: Props) => {
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
-                                        {/* {
-                                            !platform.exitDate && (
-                                                <button
-                                                    onClick={() => handleOpenExitModal(platform)}
-                                                    className="text-green-600 hover:text-green-900 mr-3 transition-colors duration-200 hover:cursor-pointer"
-                                                >
-                                                    Salida
-                                                </button>
-                                            )
-                                        } */}
                                         {
                                             !platform.exitDate && (
                                                 <button
@@ -253,20 +222,6 @@ export const FtnTable = ({ data, onDelete, onEdit, onExit }: Props) => {
                     </div>
                 </div>
             )}
-
-            <Modal
-                isOpen={isExitModalOpen}
-                onClose={handleCloseExitModal}
-                title="REGISTRAR SALIDA DE TARIMAS"
-            >
-                {selectedPlatform && (
-                    <FtnExitForm
-                        platform={selectedPlatform}
-                        onSuccess={handleExitSuccess}
-                        onCancel={handleCloseExitModal}
-                    />
-                )}
-            </Modal>
 
             <DeleteConfirmationModal
                 isOpen={deleteModal.isOpen}
