@@ -77,8 +77,8 @@ export const FtnForm = ({ platform, onSuccess, onCancel }: Props) => {
 
                 <InputField
                     label="Folio"
-                    type="text"
-                    value={formData.folio}
+                    type="number"
+                    value={formData.folio || ""}
                     onChange={(e) => handleInputChange("folio", e.target.value)}
                     required
                 />
