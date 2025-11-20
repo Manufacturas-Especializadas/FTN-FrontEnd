@@ -9,6 +9,7 @@ export const API_CONFIG = {
     endpoints: {
         ftn: {
             getStageEntrance: "/api/StageEntrance/GetStageEntrances",
+            searchByPartNumber: "/api/StageEntrance/SearchByPartNumber/",
             create: "/api/StageEntrance/Create",
             update: "/api/StageEntrance/Update/",
             patch: "/api/StageEntrance/UpdateExits/",
