@@ -10,6 +10,7 @@ export const API_CONFIG = {
         ftn: {
             getStageEntrance: "/api/StageEntrance/GetStageEntrances",
             searchByPartNumber: "/api/StageEntrance/SearchByPartNumber/",
+            processExits: "/api/StageEntrance/ProcessExits",
             create: "/api/StageEntrance/Create",
             update: "/api/StageEntrance/Update/",
             patch: "/api/StageEntrance/UpdateExits/",
