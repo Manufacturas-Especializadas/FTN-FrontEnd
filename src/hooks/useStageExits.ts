@@ -77,7 +77,7 @@ export const useStageExits = () => {
 
                         if (partNumbersArray.length > 0) {
                             const quantityPerPart = Math.floor(folio.numberOfPieces / partNumbersArray.length);
-                            partNumbers = partNumbersArray.map(part => ({
+                            partNumbers = partNumbersArray.map((part: string) => ({
                                 partNumber: part,
                                 quantity: quantityPerPart
                             }));
