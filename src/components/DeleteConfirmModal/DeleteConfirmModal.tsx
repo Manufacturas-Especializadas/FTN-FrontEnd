@@ -64,9 +64,9 @@ export const DeleteConfirmationModal = ({
                                 <div className="font-medium text-red-800">
                                     {platform.folio}
                                 </div>
-                                <div className="text-sm text-red-600">
-                                    {platform.partNumber} • {platform.entryDate}
-                                </div>
+                                {/* <div className="text-sm text-red-600">
+                                    {platform.partNumbers} • {platform.entryDate}
+                                </div> */}
                             </div>
                         </div>
                     </div>

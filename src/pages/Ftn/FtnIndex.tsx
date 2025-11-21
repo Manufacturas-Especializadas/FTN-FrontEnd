@@ -26,7 +26,7 @@ export const FtnIndex = () => {
     const filteredData = dataMetrics?.filter(item => {
         if (filters.estado === 'activos' && item.exitDate) return false;
         if (filters.estado === 'completados' && !item.exitDate) return false;
-        if (filters.partNumber && !item.partNumber.includes(filters.partNumber)) return false;
+        if (filters.partNumber && !item.partNumbers.includes(filters.partNumber)) return false;
         if (filters.fechaInicio && new Date(item.entryDate) < new Date(filters.fechaInicio)) return false;
         if (filters.fechaFin && new Date(item.entryDate) > new Date(filters.fechaFin)) return false;
         return true;
