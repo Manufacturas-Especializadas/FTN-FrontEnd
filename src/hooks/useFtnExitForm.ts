@@ -1,123 +1,179 @@
-import type React from "react";
-import type { StageEntrance } from "../types/StageEntrance";
 import { useState } from "react";
-import { ftnService, type FtnPatchFormData } from "../api/services/FtnService";
+import { ftnService } from "../api/services/FtnService";
 
+export interface PartNumberDetail {
+    partNumber: string;
+    quantity: number;
+}
 
-interface UseFtnExitFormProps {
-    platform: StageEntrance;
-    onSuccess?: () => void;
-};
+export interface FolioWithDetails {
+    folio: number;
+    platforms: number;
+    totalPieces: number;
+    entryDate: string;
+    exitDate?: string;
+    partNumbers: PartNumberDetail[];
+}
 
-interface UseFtnExitFormReturn {
-    formData: {
-        exitPlatforms: number;
-        exitDate: string;
-    };
-    loading: boolean;
-    error: string;
-    success: string;
-    handleInputChange: (field: keyof { exitPlatforms: number; exitDate: string }, value: string | number) => void;
-    handleSubmit: (e: React.FormEvent) => Promise<void>;
-    resetForm: () => void;
-};
+export interface SearchResult {
+    partNumber: string;
+    totalPlatforms: number;
+    totalPieces: number;
+    folios: FolioWithDetails[];
+}
 
-export const useFtnExitForm = ({ platform, onSuccess }: UseFtnExitFormProps): UseFtnExitFormReturn => {
-    const [formData, setFormData] = useState({
-        exitPlatforms: platform.platforms || 0,
-        exitDate: new Date().toISOString().slice(0, 16)
-    });
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
+export interface SelectedItem {
+    folio: number;
+    partNumber: string;
+    quantity: number;
+    maxQuantity: number;
+    isPlatforms: boolean;
+}
+
+export interface ProcessExitResult {
+    success: boolean;
+    message: string;
+    details?: Array<{
+        folio: string;
+        success: boolean;
+        message: string;
+        previousPlatforms: number;
+        currentPlatforms: number;
+        previousPieces?: number;
+        currentPieces?: number;
+    }>;
+}
+
+export const useStageExits = () => {
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
 
-    const handleInputChange = (field: keyof { exitPlatforms: number; exitDate: string }, value: string | number) => {
-        setFormData(prev => ({
-            ...prev,
-            [field]: value
-        }));
-        setError("");
-        setSuccess("");
-    };
-
-    const validateForm = (): boolean => {
-        if (formData.exitPlatforms < 0) {
-            setError("La cantidad de tarimas no puede ser negativa");
-            return false;
-        }
-
-        if (formData.exitPlatforms > platform.platforms) {
-            setError(`La cantidad de salida no puede ser mayor a ${platform.platforms}(cantidad disponible)`);
-            return false;
-        }
-
-        if (!formData.exitDate) {
-            setError("La fecha de salida es requerida");
-            return false;
-        }
-
-        return true;
-    };
-
-    const resetForm = () => {
-        setFormData({
-            exitPlatforms: platform.platforms || 0,
-            exitDate: new Date().toISOString().slice(0, 16)
-        });
-        setError("");
-        setSuccess("");
-        setLoading(false);
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!validateForm()) {
+    const searchByPartNumber = async (partNumber: string) => {
+        if (!partNumber.trim()) {
+            setSearchResults([]);
             return;
         }
 
         setLoading(true);
-        setError("");
-        setSuccess("");
+        setError(null);
+        setSelectedItems([]);
 
         try {
-            const patchData: FtnPatchFormData = {
-                platforms: formData.exitPlatforms,
-                exitDate: new Date(formData.exitDate).toISOString()
-            };
+            const results = await ftnService.searchByPartNumber(partNumber);
 
-            const response = await ftnService.patch(platform.id, patchData);
+            const processedResults = results.map((result: any) => {
+                const foliosWithDetails: FolioWithDetails[] = result.folios.map((folio: any) => ({
+                    folio: folio.folio,
+                    platforms: folio.platforms || 1,
+                    totalPieces: folio.totalPieces || folio.numberOfPieces || 0,
+                    entryDate: folio.entryDate,
+                    exitDate: folio.exitDate,
+                    partNumbers: folio.partNumbers || []
+                }));
 
-            if (response.success) {
-                setSuccess("Salida registrada correctamente");
+                return {
+                    partNumber: result.partNumber,
+                    totalPlatforms: result.totalPlatforms || 0,
+                    totalPieces: result.totalPieces || 0,
+                    folios: foliosWithDetails
+                };
+            });
 
-                setTimeout(() => {
-                    onSuccess?.();
-                }, 1500);
-            } else {
-                setError(response.message || "Error al registrar la salida");
-            }
-        } catch (error: any) {
-            console.error("Error al registrar la salida: ", error);
-            const errorMessage = error.response?.data?.message
-                ? `Error: ${error.response.data.message}`
-                : error.message
-                    ? `Error: ${error.message}`
-                    : "Error desconocido al registrar la salida";
-
-            setError(errorMessage);
+            setSearchResults(processedResults);
+        } catch (err) {
+            setError('Error al buscar el número de parte');
+            console.error('Search error:', err);
         } finally {
             setLoading(false);
         }
-    }
+    };
+
+    const updateSelectedQuantity = (folio: number, partNumber: string, quantity: number, maxQuantity: number, isPlatforms: boolean = false) => {
+        setSelectedItems(prev => {
+            const filtered = prev.filter(item =>
+                !(item.folio === folio && item.partNumber === partNumber && item.isPlatforms === isPlatforms)
+            );
+
+            if (quantity > 0) {
+                return [...filtered, { folio, partNumber, quantity, maxQuantity, isPlatforms }];
+            }
+
+            return filtered;
+        });
+    };
+
+    const processExit = async (selectedItems: SelectedItem[]): Promise<ProcessExitResult> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const itemsToProcess = selectedItems.map(item => ({
+                folio: item.folio,
+                partNumber: item.partNumber,
+                quantity: item.quantity,
+                isPlatforms: item.isPlatforms
+            }));
+
+            if (itemsToProcess.length === 0) {
+                throw new Error('No hay items seleccionados para procesar');
+            }
+
+            const result = await ftnService.processExits(itemsToProcess);
+
+            if (result.success) {
+                setSelectedItems([]);
+                setSearchResults([]);
+
+                return {
+                    success: true,
+                    message: result.message,
+                    details: result.results
+                };
+            } else {
+                throw new Error(result.message || 'Error al procesar las salidas');
+            }
+
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Error al procesar las salidas';
+            setError(errorMessage);
+            return {
+                success: false,
+                message: errorMessage
+            };
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const clearSearch = () => {
+        setSearchResults([]);
+        setSelectedItems([]);
+        setError(null);
+    };
+
+    const getTotalSelected = () => {
+        return selectedItems.reduce((sum, item) => sum + item.quantity, 0);
+    };
+
+    const getSelectedQuantity = (folio: number, partNumber: string, isPlatforms: boolean = false) => {
+        const item = selectedItems.find(item =>
+            item.folio === folio && item.partNumber === partNumber && item.isPlatforms === isPlatforms
+        );
+        return item ? item.quantity : 0;
+    };
 
     return {
-        formData,
+        searchResults,
         loading,
         error,
-        success,
-        handleInputChange,
-        handleSubmit,
-        resetForm
-    }
+        selectedItems,
+        searchByPartNumber,
+        updateSelectedQuantity,
+        processExit,
+        clearSearch,
+        getTotalSelected,
+        getSelectedQuantity
+    };
 };

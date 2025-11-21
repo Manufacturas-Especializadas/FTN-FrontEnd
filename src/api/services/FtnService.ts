@@ -3,11 +3,15 @@ import type { SearchResult } from "../../hooks/useStageExits";
 import type { StageEntrance } from "../../types/StageEntrance";
 import { apiClient } from "../client";
 
+export interface PartNumberDto {
+    partNumber: string;
+    quantity: number;
+}
+
 export interface FtnFormData {
     folio: number;
-    partNumber: string;
-    numberOfPieces: number;
     entryDate: string;
+    partNumbers: PartNumberDto[];
 };
 
 export interface FtnPatchFormData {
@@ -18,7 +22,29 @@ export interface FtnPatchFormData {
 export interface FtnResponse {
     success?: boolean;
     message?: string;
-    idStageEntrances: number;
+    idStageEntrances?: number;
+    IdModified?: number;
+};
+
+export interface ProcessExitsRequest {
+    ExitItem: Array<{
+        folio: number;
+        partNumber: string;
+        quantity: number;
+    }>;
+}
+
+export interface ProcessExitsResponse {
+    success: boolean;
+    message: string;
+    results: Array<{
+        folio: string;
+        success: boolean;
+        message: string;
+        previousPlatforms: number;
+        currentPlatforms: number;
+    }>;
+    exitDate: string;
 };
 
 export interface MonthlyReportResponse {
@@ -38,9 +64,9 @@ export interface MonthlyReportResponse {
 
 export interface RecordDetail {
     id: number;
-    folio: string;
+    folio: number;
     partNumber: string;
-    platforms: number;
+    pallets: number;
     entryDate: string;
     exitDate?: string;
     daysInStorage: number;
@@ -48,13 +74,12 @@ export interface RecordDetail {
     exitCost: number;
     storageCost: number;
     totalCost: number;
-    isActive: boolean;
-    status: string;
 };
 
 class FtnService {
     private getStageEntranceEndpoint = API_CONFIG.endpoints.ftn.getStageEntrance;
     private searchByPartNumberEndpoint = API_CONFIG.endpoints.ftn.searchByPartNumber;
+    private processExitsEndpoint = API_CONFIG.endpoints.ftn.processExits;
     private createEndpoint = API_CONFIG.endpoints.ftn.create;
     private updateEndpoint = API_CONFIG.endpoints.ftn.update;
     private patchEndpoint = API_CONFIG.endpoints.ftn.patch;
@@ -66,6 +91,14 @@ class FtnService {
 
     async searchByPartNumber(partNumber: string): Promise<SearchResult[]> {
         return apiClient.get<SearchResult[]>(`${this.searchByPartNumberEndpoint}${encodeURIComponent(partNumber)}`);
+    };
+
+    async processExits(exitItems: Array<{ folio: number; partNumber: string; quantity: number }>): Promise<ProcessExitsResponse> {
+        const request: ProcessExitsRequest = {
+            ExitItem: exitItems
+        };
+
+        return apiClient.post<ProcessExitsResponse>(this.processExitsEndpoint, request);
     };
 
     async create(formData: FtnFormData): Promise<FtnResponse> {

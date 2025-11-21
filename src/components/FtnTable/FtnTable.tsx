@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { StageEntrance } from "../../types/StageEntrance";
 import { useDeleteModal } from "../../hooks/useDeleteModal";
-import { ftnService } from "../../api/services/FtnService";
+// import { ftnService } from "../../api/services/FtnService";
 import { formatDateTime } from "../../utils/dateFormatter";
 import { DeleteConfirmationModal } from "../DeleteConfirmModal/DeleteConfirmModal";
 import { usePlatformsMetrics } from "../../hooks/usePlatformsMetrics";
@@ -55,7 +55,7 @@ export const FtnTable = ({ data, onDelete, onEdit }: Props) => {
         startDeleting();
 
         try {
-            await ftnService.delete(deleteModal.plattaform.id);
+            // await ftnService.delete();
             closeDeleteModal();
 
             if (onDelete) {
@@ -82,6 +82,16 @@ export const FtnTable = ({ data, onDelete, onEdit }: Props) => {
         setCurrentPage(prev => Math.min(prev + 1, totalPages));
     };
 
+    const formatPartNumbers = (partNumbers: any[]) => {
+        if (!partNumbers || partNumbers.length === 0) return "N/A";
+
+        if (Array.isArray(partNumbers)) {
+            return partNumbers.map(pn => pn.partNumber || pn.PartNumber || pn).join(", ");
+        }
+
+        return "N/A";
+    };
+
     return (
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="overflow-x-auto">
@@ -92,13 +102,13 @@ export const FtnTable = ({ data, onDelete, onEdit }: Props) => {
                                 Folio
                             </th>
                             <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Número de parte
+                                Números de parte
                             </th>
                             <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Cantidad de tarimas
                             </th>
                             <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Cantidad de piezas
+                                Total de piezas
                             </th>
                             <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Fecha de entrada
@@ -120,19 +130,19 @@ export const FtnTable = ({ data, onDelete, onEdit }: Props) => {
                                             {platform.folio}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="text-sm text-gray-500">
-                                            {platform.partNumber}
+                                    <td className="px-6 py-4">
+                                        <div className="text-sm text-gray-500 max-w-xs truncate" title={formatPartNumbers(platform.partNumbers)}>
+                                            {formatPartNumbers(platform.partNumbers)}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-500">
-                                            {platform.platforms}
+                                            {platform.platforms || 0}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         <div className="text-sm text-gray-500">
-                                            {platform.numberOfPieces}
+                                            {platform.totalPieces || 0}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap">
@@ -165,6 +175,7 @@ export const FtnTable = ({ data, onDelete, onEdit }: Props) => {
                 </table>
             </div>
 
+            {/* El resto del código de paginación se mantiene igual */}
             {totalPages > 1 && (
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
                     <div className="flex items-center justify-between">

@@ -1,7 +1,7 @@
 export interface Folio {
     folio: number;
     platforms: number;
-    numberOfPieces: number;
+    totalPieces: number;
     entryDate: string;
     exitDate: string | null;
 }

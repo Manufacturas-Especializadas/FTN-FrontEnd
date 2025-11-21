@@ -1,14 +1,15 @@
+import type { StageEntrancePartNumber } from "./StageEntrancePartNumber";
+
 export interface StageEntrance {
-    id: number;
+    id?: number;
     folio: number;
-    partNumber: string;
-    platforms: number;
-    numberOfPieces: number;
+    totalPieces: number;
+    platforms?: number;
+    idStorageCost?: number;
+    idEntranceFee?: number;
     entryDate: string;
-    entranceFee?: number;
-    storageCost?: number;
     exitDate?: string;
-    daysInWarehouse: number;
-    coustOut?: number;
-    totalCost?: number;
+    createdAt?: string;
+    updatedAt?: string;
+    partNumbers: StageEntrancePartNumber[];
 };

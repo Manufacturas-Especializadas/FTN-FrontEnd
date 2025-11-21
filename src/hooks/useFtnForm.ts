@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 import { ftnService, type FtnFormData } from "../api/services/FtnService";
 import type { StageEntrance } from "../types/StageEntrance";
 
+interface PartNumberWithQuantity {
+    partNumber: string;
+    quantity: number;
+}
+
 interface UseFtnFormProps {
     platform?: StageEntrance | null;
     onSuccess?: () => void;
@@ -13,55 +18,75 @@ interface UseFtnFormReturn {
     error: string;
     success: string;
     isEditing: boolean;
-    partNumbers: string[];
+    partNumbers: PartNumberWithQuantity[];
     handleInputChange: (field: keyof FtnFormData, value: string | number) => void;
     handleSubmit: (e: React.FormEvent) => Promise<void>;
     addPartNumberField: () => void;
     removePartNumberField: (index: number) => void;
     handlePartNumberChange: (index: number, value: string) => void;
+    handleQuantityChange: (index: number, value: number) => void;
     resetForm: () => void;
 };
 
 export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnFormReturn => {
     const [formData, setFormData] = useState<FtnFormData>({
         folio: 0,
-        partNumber: "",
-        numberOfPieces: 0,
-        entryDate: ""
+        entryDate: "",
+        partNumbers: []
     });
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const [loading, setLoading] = useState(false);
-    const [partNumbers, setPartNumbers] = useState<string[]>([""]);
+    const [partNumbers, setPartNumbers] = useState<PartNumberWithQuantity[]>([{ partNumber: "", quantity: 0 }]);
     const isEditing = !!platform;
 
     useEffect(() => {
         if (platform) {
-            if (platform.partNumber) {
-                const parts = platform.partNumber.split(',').map(p => p.trim()).filter(p => p !== "");
-                setPartNumbers(parts.length > 0 ? parts : [""]);
+            if (platform.partNumbers && platform.partNumbers.length > 0) {
+                const parts = platform.partNumbers.map(pn => ({
+                    partNumber: pn.partNumber,
+                    quantity: pn.quantity
+                }));
+                setPartNumbers(parts);
             } else {
-                setPartNumbers([""]);
+                const parts: PartNumberWithQuantity[] = [{ partNumber: "", quantity: 0 }];
+                setPartNumbers(parts);
             }
 
             setFormData({
                 folio: platform.folio || 0,
-                partNumber: platform.partNumber || "",
-                numberOfPieces: platform.numberOfPieces || 0,
-                entryDate: platform.entryDate || ""
+                entryDate: platform.entryDate || "",
+                partNumbers: platform.partNumbers || []
             });
         }
     }, [platform]);
 
     const handlePartNumberChange = (index: number, value: string) => {
         const newPartNumbers = [...partNumbers];
-        newPartNumbers[index] = value;
+        newPartNumbers[index] = { ...newPartNumbers[index], partNumber: value };
         setPartNumbers(newPartNumbers);
 
-        const filteredParts = newPartNumbers.filter(part => part.trim() !== "");
+        const filteredParts = newPartNumbers.filter(part => part.partNumber.trim() !== "");
+
         setFormData(prev => ({
             ...prev,
-            partNumber: filteredParts.join(",")
+            partNumbers: filteredParts
+        }));
+
+        if (error) setError("");
+        if (success) setSuccess("");
+    };
+
+    const handleQuantityChange = (index: number, value: number) => {
+        const newPartNumbers = [...partNumbers];
+        newPartNumbers[index] = { ...newPartNumbers[index], quantity: value };
+        setPartNumbers(newPartNumbers);
+
+        const filteredParts = newPartNumbers.filter(part => part.partNumber.trim() !== "");
+
+        setFormData(prev => ({
+            ...prev,
+            partNumbers: filteredParts
         }));
 
         if (error) setError("");
@@ -69,7 +94,7 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
     };
 
     const addPartNumberField = () => {
-        setPartNumbers([...partNumbers, ""]);
+        setPartNumbers([...partNumbers, { partNumber: "", quantity: 0 }]);
     };
 
     const removePartNumberField = (index: number) => {
@@ -77,10 +102,11 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
             const newPartNumbers = partNumbers.filter((_, i) => i !== index);
             setPartNumbers(newPartNumbers);
 
-            const filteredParts = newPartNumbers.filter(part => part.trim() !== "");
+            const filteredParts = newPartNumbers.filter(part => part.partNumber.trim() !== "");
+
             setFormData(prev => ({
                 ...prev,
-                partNumber: filteredParts.join(",")
+                partNumbers: filteredParts
             }));
         }
     };
@@ -95,15 +121,22 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
     };
 
     const validateForm = (): boolean => {
-        if (!formData.folio) {
-            setError("El folio es requerido");
+        if (!formData.folio || formData.folio <= 0) {
+            setError("El folio es requerido y debe ser mayor a 0");
             return false;
         }
 
-        const validPartNumbers = partNumbers.filter(part => part.trim() !== "");
+        const validPartNumbers = partNumbers.filter(part => part.partNumber.trim() !== "");
         if (validPartNumbers.length === 0) {
             setError("Al menos un número de parte es requerido");
             return false;
+        }
+
+        for (const part of validPartNumbers) {
+            if (part.quantity <= 0) {
+                setError(`La cantidad para el número de parte "${part.partNumber}" debe ser mayor a 0`);
+                return false;
+            }
         }
 
         if (!formData.entryDate) {
@@ -111,13 +144,9 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
             return false;
         }
 
-        if (formData.numberOfPieces === 0) {
-            setError("La cantidad de tarimas no puede ser 0");
-            return false;
-        }
-
-        if (formData.numberOfPieces < 0) {
-            setError("La cantidad no puede ser negativa");
+        const totalQuantity = validPartNumbers.reduce((sum, part) => sum + part.quantity, 0);
+        if (totalQuantity === 0) {
+            setError("La cantidad total de piezas no puede ser 0");
             return false;
         }
 
@@ -127,12 +156,11 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
     const resetForm = () => {
         setFormData({
             folio: 0,
-            partNumber: "",
-            numberOfPieces: 0,
-            entryDate: ""
+            entryDate: "",
+            partNumbers: []
         });
         setError("");
-        setPartNumbers([""]);
+        setPartNumbers([{ partNumber: "", quantity: 0 }]);
         setSuccess("");
         setLoading(false);
     };
@@ -149,17 +177,15 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
         setSuccess("");
 
         try {
-            const filteredPartNumbers = partNumbers.filter(part => part.trim() !== "");
-            const finalPartNumber = filteredPartNumbers.join(",");
-
+            const filteredPartNumbers = partNumbers.filter(part => part.partNumber.trim() !== "");
             const submitData = {
                 ...formData,
-                partNumber: finalPartNumber
+                partNumbers: filteredPartNumbers
             };
 
             let response;
 
-            if (isEditing && platform) {
+            if (isEditing && platform?.id) {
                 response = await ftnService.update(platform.id, submitData);
             } else {
                 response = await ftnService.create(submitData);
@@ -186,7 +212,7 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
                 ? `Error: ${error.response.data.message}`
                 : error.message
                     ? `Error: ${error.message}`
-                    : `Error desconocido al ${isEditing ? 'actualizar' : 'guardar'} el flete`;
+                    : `Error desconocido al ${isEditing ? 'actualizar' : 'guardar'} el registro`;
 
             setError(errorMessage);
         } finally {
@@ -200,12 +226,13 @@ export const useFtnForm = ({ platform, onSuccess }: UseFtnFormProps): UseFtnForm
         error,
         success,
         isEditing,
-        partNumbers, // Agregué esto al return
+        partNumbers,
         handleInputChange,
         handlePartNumberChange,
+        handleQuantityChange,
         handleSubmit,
-        addPartNumberField, // Agregué esto al return
-        removePartNumberField, // Agregué esto al return
+        addPartNumberField,
+        removePartNumberField,
         resetForm
     };
 };
