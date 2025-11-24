@@ -3,16 +3,12 @@ import { useState } from "react";
 interface Filters {
     folio: string;
     partNumber: string;
-    startDate: string;
-    endDate: string;
 };
 
 export const AdvancedFilters = ({ onFilter }: { onFilter: (filters: Filters) => void }) => {
     const [filters, setFilters] = useState<Filters>({
         folio: "",
-        partNumber: "",
-        startDate: "",
-        endDate: ""
+        partNumber: ""
     });
 
     const handleFilterChange = (field: keyof Filters, value: string) => {
@@ -24,9 +20,7 @@ export const AdvancedFilters = ({ onFilter }: { onFilter: (filters: Filters) => 
     const clearFilters = () => {
         const clearedFilters: Filters = {
             folio: "",
-            partNumber: "",
-            startDate: "",
-            endDate: ""
+            partNumber: ""
         };
         setFilters(clearedFilters);
         onFilter(clearedFilters);
@@ -46,7 +40,7 @@ export const AdvancedFilters = ({ onFilter }: { onFilter: (filters: Filters) => 
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <input
                     type="text"
                     placeholder="Buscar por folio..."

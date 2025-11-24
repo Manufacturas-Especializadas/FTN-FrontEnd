@@ -15,7 +15,10 @@ export const FtnIndex = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isModalOpenExits, setIsModalOpenExits] = useState(false);
     const [editing, setEditing] = useState<StageEntrance | null>(null);
-    const [filters, setFilters] = useState<any>({});
+    const [filters, setFilters] = useState({
+        folio: "",
+        partNumber: ""
+    });
 
     const { data, error, refetch } = useStageEntrance();
     const { dataMetrics } = usePlatformsMetrics(data);
@@ -24,9 +27,25 @@ export const FtnIndex = () => {
     const navigate = useNavigate();
 
     const filteredData = dataMetrics?.filter(item => {
-        if (filters.partNumber && !item.partNumbers.includes(filters.partNumber)) return false;
-        if (filters.fechaInicio && new Date(item.entryDate) < new Date(filters.fechaInicio)) return false;
-        if (filters.fechaFin && new Date(item.entryDate) > new Date(filters.fechaFin)) return false;
+        if (filters.partNumber && filters.partNumber.trim() !== '') {
+            const searchTerm = filters.partNumber.toLowerCase().trim();
+
+            const hasMatchingPart = item.partNumbers.some(part =>
+                part.partNumber?.toLowerCase().includes(searchTerm)
+            );
+            if (!hasMatchingPart) {
+                return false;
+            }
+        }
+
+        if (filters.folio && filters.folio.trim() !== '') {
+            const searchFolio = filters.folio.toString().trim();
+            const itemFolio = item.folio?.toString() || '';
+            if (!itemFolio.includes(searchFolio)) {
+                return false;
+            }
+        }
+
         return true;
     }) || [];
 
