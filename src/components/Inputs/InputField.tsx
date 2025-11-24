@@ -10,20 +10,61 @@ const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
         const inputId = id || (label || '').replace(/\s+/g, '-').toLowerCase();
 
         return (
-            <div className="mb-4">
-                <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
-                    {label}
-                </label>
+            <div className="relative mb-4 font-sans">
                 <input
                     ref={ref}
                     id={inputId}
-                    className={`w-full px-4 py-2.5 rounded-lg border ${error
-                        ? 'border-red-500 bg-red-50 focus:ring-red-500 focus:border-red-500'
-                        : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-                        } focus:outline-none focus:ring-2 transition-all bg-white shadow-sm ${className}`}
+                    placeholder=" "
+                    className={`
+                        peer
+                        block w-full border bg-white 
+                        px-3 pt-5 pb-1.5 text-sm rounded-md
+                        
+                        focus:outline-none focus:ring-1
+                        transition-colors duration-200 ease-in-out
+                        ${error
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : 'border-gray-300 focus:border-blue-600 focus:ring-blue-600'
+                        }
+                        ${className}
+                    `}
                     {...props}
                 />
-                {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+
+                <label
+                    htmlFor={inputId}
+                    className={`
+                        absolute left-3 cursor-text duration-200 transform 
+                        origin-[0] pointer-events-none select-none
+                        uppercase tracking-wide font-bold
+
+                        /* top-0.5 para subirlo un poco más ya que el input es más chico */
+                        top-0.5 
+                        text-[10px] /* Texto un poco más chico al flotar */
+                        scale-100 
+                        -translate-y-0
+
+                        peer-placeholder-shown:top-1/2 
+                        peer-placeholder-shown:-translate-y-1/2 
+                        peer-placeholder-shown:text-sm /* Tamaño normal cuando está en el centro */
+                        peer-placeholder-shown:font-normal
+                        peer-placeholder-shown:text-gray-400
+
+                        peer-focus:top-0.5 
+                        peer-focus:-translate-y-0 
+                        peer-focus:text-[10px]
+                        peer-focus:font-bold
+                        
+                        ${error
+                            ? 'text-red-500 peer-focus:text-red-500'
+                            : 'text-gray-500 peer-focus:text-blue-600'
+                        }
+                    `}
+                >
+                    {label} {props.required && <span className={error ? 'text-red-500' : 'peer-focus:text-red-500'}>*</span>}
+                </label>
+
+                {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
             </div>
         );
     }
