@@ -59,13 +59,13 @@ const SelectField = React.forwardRef<HTMLSelectElement, SelectFieldProps>(
                     htmlFor={selectId}
                     className={`
                         absolute left-3 duration-200 transform 
-                        origin-[0] pointer-events-none select-none
+                        origin-left pointer-events-none select-none
                         uppercase tracking-wide font-bold
 
                         top-0.5 
                         text-[10px] 
                         scale-100 
-                        -translate-y-0
+                        translate-y-0
                         
                         peer-invalid:top-1/2 
                         peer-invalid:-translate-y-1/2 
@@ -74,7 +74,7 @@ const SelectField = React.forwardRef<HTMLSelectElement, SelectFieldProps>(
                         peer-invalid:text-gray-400
 
                         peer-focus:top-0.5 
-                        peer-focus:-translate-y-0 
+                        peer-focus:translate-y-0 
                         peer-focus:text-[10px]
                         peer-focus:font-bold
 
