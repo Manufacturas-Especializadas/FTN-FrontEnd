@@ -62,22 +62,6 @@ export const AdvancedFilters = ({ onFilter }: { onFilter: (filters: Filters) => 
                     onChange={(e) => handleFilterChange("partNumber", e.target.value)}
                     className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-
-                <input
-                    type="date"
-                    placeholder="Fecha inicio"
-                    value={filters.startDate}
-                    onChange={(e) => handleFilterChange("startDate", e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-
-                <input
-                    type="date"
-                    placeholder="Fecha fin"
-                    value={filters.endDate}
-                    onChange={(e) => handleFilterChange("endDate", e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
             </div>
         </div>
     );
