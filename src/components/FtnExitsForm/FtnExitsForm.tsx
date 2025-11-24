@@ -126,6 +126,21 @@ export const FtnExitsForm = () => {
 
     const selectionSummary = getSelectionSummary();
 
+    const calculateFolioPieces = (folio: any): number => {
+        if (folio.partNumbers && folio.partNumbers.length > 0) {
+            return folio.partNumbers.reduce((sum: number, part: any) => sum + (part.quantity || 0), 0);
+        }
+        return folio.totalPieces || 0;
+    };
+
+    const calculateTotalResultPieces = (result: SearchResult): number => {
+        if (!result.folios || result.folios.length === 0) return 0;
+
+        return result.folios.reduce((sum, folio) => {
+            return sum + calculateFolioPieces(folio);
+        }, 0);
+    };
+
     return (
         <div className="space-y-6">
             <form onSubmit={handleSearch} className="space-y-4">
@@ -157,123 +172,129 @@ export const FtnExitsForm = () => {
                     </div>
                 )}
 
-                {processedResults.map((result, resultIndex) => (
-                    <div key={result.partNumber + resultIndex} className="border border-gray-200 rounded-lg p-4 bg-white">
-                        <div className="flex justify-between items-start mb-3">
-                            <div>
-                                <h3 className="font-semibold text-gray-900 text-lg">
-                                    {result.partNumber}
-                                </h3>
-                                <p className="text-sm text-gray-600 mt-1">
-                                    📦 {result.totalPlatforms} tarimas • 🧩 {result.totalPieces} piezas
-                                </p>
+                {processedResults.map((result, resultIndex) => {
+                    const totalResultPieces = calculateTotalResultPieces(result);
+
+                    return (
+                        <div key={result.partNumber + resultIndex} className="border border-gray-200 rounded-lg p-4 bg-white">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <h3 className="font-semibold text-gray-900 text-lg">
+                                        {result.partNumber}
+                                    </h3>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        📦 {result.totalPlatforms} tarimas • 🧩 {totalResultPieces} piezas
+                                    </p>
+                                </div>
+                                <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                                    {result.folios.length} folio(s)
+                                </span>
                             </div>
-                            <span className="bg-blue-100 text-blue-800 text-sm font-medium px-2.5 py-0.5 rounded">
-                                {result.folios.length} folio(s)
-                            </span>
-                        </div>
 
-                        <div className="space-y-3">
-                            {result.folios.map((folio, folioIndex) => (
-                                <div key={folio.folio + folioIndex} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium text-gray-900">
-                                                Folio: {folio.folio}
-                                            </span>
-                                            {folio.exitDate && (
-                                                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded">
-                                                    Completado
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div className="text-sm text-gray-600">
-                                            🗄️ {folio.platforms} tarimas • 🧩 {folio.totalPieces} piezas
-                                        </div>
-                                    </div>
+                            <div className="space-y-3">
+                                {result.folios.map((folio, folioIndex) => {
+                                    const folioTotalPieces = calculateFolioPieces(folio);
 
-                                    <div className="text-xs text-gray-500 mb-3">
-                                        📅 Entrada: {new Date(folio.entryDate).toLocaleDateString('es-MX')}
-                                        {folio.exitDate && ` • Salida: ${new Date(folio.exitDate).toLocaleDateString('es-MX')}`}
-                                    </div>
-
-                                    {!folio.exitDate && (
-                                        <div className="space-y-4">
-                                            {/* Input para sacar tarimas - SIEMPRE VISIBLE */}
-                                            <div className="bg-white p-3 rounded border">
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <label className="font-medium text-gray-800">Sacar tarimas</label>
-                                                        <div className="text-xs text-gray-500 mt-1">
-                                                            Tarimas disponibles: {folio.platforms}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="number"
-                                                            min={0}
-                                                            max={folio.platforms}
-                                                            value={getSelectedQuantity(folio.folio, result.partNumber, true)}
-                                                            onChange={(e) => {
-                                                                handleQuantityChange(folio.folio, result.partNumber, folio.platforms, e.target.value, true);
-                                                            }}
-                                                            className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
-                                                            placeholder="0"
-                                                        />
-                                                        <span className="text-sm text-gray-500">/ {folio.platforms}</span>
-                                                    </div>
+                                    return (
+                                        <div key={folio.folio + folioIndex} className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-medium text-gray-900">
+                                                        Folio: {folio.folio}
+                                                    </span>
+                                                    {folio.exitDate && (
+                                                        <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded">
+                                                            Completado
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-sm text-gray-600">
+                                                    🗄️ {folio.platforms} tarimas • 🧩 {folioTotalPieces} piezas
                                                 </div>
                                             </div>
 
-                                            {/* Inputs para números de parte individuales (piezas) - SOLO SI HAY PARTNUMBERS */}
-                                            {folio.partNumbers && folio.partNumbers.length > 0 && (
-                                                <div>
-                                                    <div className="text-sm font-medium text-gray-700 border-b pb-1 mb-2">
-                                                        Sacar piezas por número de parte:
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        {folio.partNumbers.map((part, partIndex) => (
-                                                            <div key={part.partNumber + partIndex} className="flex items-center justify-between p-2 bg-white rounded border">
-                                                                <div className="flex-1">
-                                                                    <span className="font-medium text-gray-800">{part.partNumber}</span>
-                                                                    <div className="text-xs text-gray-500 mt-1">
-                                                                        Piezas disponibles: {part.quantity}
-                                                                    </div>
-                                                                </div>
+                                            <div className="text-xs text-gray-500 mb-3">
+                                                📅 Entrada: {new Date(folio.entryDate).toLocaleDateString('es-MX')}
+                                                {folio.exitDate && ` • Salida: ${new Date(folio.exitDate).toLocaleDateString('es-MX')}`}
+                                            </div>
 
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="text-right">
-                                                                        <label htmlFor={`quantity-${folio.folio}-${part.partNumber}`} className="text-sm text-gray-700 block mb-1">
-                                                                            Cantidad:
-                                                                        </label>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <input
-                                                                                id={`quantity-${folio.folio}-${part.partNumber}`}
-                                                                                type="number"
-                                                                                min={0}
-                                                                                max={part.quantity}
-                                                                                value={getSelectedQuantity(folio.folio, part.partNumber, false)}
-                                                                                onChange={(e) => {
-                                                                                    handleQuantityChange(folio.folio, part.partNumber, part.quantity, e.target.value, false);
-                                                                                }}
-                                                                                className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
-                                                                            />
-                                                                            <span className="text-sm text-gray-500">/ {part.quantity}</span>
-                                                                        </div>
-                                                                    </div>
+                                            {!folio.exitDate && (
+                                                <div className="space-y-4">
+                                                    <div className="bg-white p-3 rounded border">
+                                                        <div className="flex items-center justify-between">
+                                                            <div>
+                                                                <label className="font-medium text-gray-800">Sacar tarimas</label>
+                                                                <div className="text-xs text-gray-500 mt-1">
+                                                                    Tarimas disponibles: {folio.platforms}
                                                                 </div>
                                                             </div>
-                                                        ))}
+                                                            <div className="flex items-center gap-2">
+                                                                <input
+                                                                    type="number"
+                                                                    min={0}
+                                                                    max={folio.platforms}
+                                                                    value={getSelectedQuantity(folio.folio, result.partNumber, true)}
+                                                                    onChange={(e) => {
+                                                                        handleQuantityChange(folio.folio, result.partNumber, folio.platforms, e.target.value, true);
+                                                                    }}
+                                                                    className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
+                                                                    placeholder="0"
+                                                                />
+                                                                <span className="text-sm text-gray-500">/ {folio.platforms}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
+
+                                                    {folio.partNumbers && folio.partNumbers.length > 0 && (
+                                                        <div>
+                                                            <div className="text-sm font-medium text-gray-700 border-b pb-1 mb-2">
+                                                                Sacar piezas por número de parte:
+                                                            </div>
+                                                            <div className="space-y-2">
+                                                                {folio.partNumbers.map((part, partIndex) => (
+                                                                    <div key={part.partNumber + partIndex} className="flex items-center justify-between p-2 bg-white rounded border">
+                                                                        <div className="flex-1">
+                                                                            <span className="font-medium text-gray-800">{part.partNumber}</span>
+                                                                            <div className="text-xs text-gray-500 mt-1">
+                                                                                Piezas disponibles: {part.quantity}
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="text-right">
+                                                                                <label htmlFor={`quantity-${folio.folio}-${part.partNumber}`} className="text-sm text-gray-700 block mb-1">
+                                                                                    Cantidad:
+                                                                                </label>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <input
+                                                                                        id={`quantity-${folio.folio}-${part.partNumber}`}
+                                                                                        type="number"
+                                                                                        min={0}
+                                                                                        max={part.quantity}
+                                                                                        value={getSelectedQuantity(folio.folio, part.partNumber, false)}
+                                                                                        onChange={(e) => {
+                                                                                            handleQuantityChange(folio.folio, part.partNumber, part.quantity, e.target.value, false);
+                                                                                        }}
+                                                                                        className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
+                                                                                    />
+                                                                                    <span className="text-sm text-gray-500">/ {part.quantity}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
-                                    )}
-                                </div>
-                            ))}
+                                    )
+                                })}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    )
+                })}
             </div>
 
             {totalSelected > 0 && (
@@ -302,7 +323,6 @@ export const FtnExitsForm = () => {
                         </div>
                     </div>
 
-                    {/* Detalle de selección */}
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                         <p className="text-sm font-medium text-blue-800 mb-2">Detalle de selección:</p>
                         <div className="space-y-1 max-h-32 overflow-y-auto">
