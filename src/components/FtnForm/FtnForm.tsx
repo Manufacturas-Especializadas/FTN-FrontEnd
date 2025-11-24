@@ -104,7 +104,6 @@ export const FtnForm = ({ platform, onSuccess, onCancel }: Props) => {
                                         value={part.partNumber}
                                         onChange={(e) => handlePartNumberChange(index, e.target.value)}
                                         required={index === 0}
-                                        placeholder="Ingresa el número de parte"
                                     />
                                 </div>
 

@@ -149,7 +149,6 @@ export const FtnExitsForm = () => {
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Ingresa el número de parte..."
                     className="mb-0"
                 />
                 <FormButton
