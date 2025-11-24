@@ -1,4 +1,5 @@
 import { useState } from "react";
+import InputField from "../Inputs/InputField";
 
 interface Filters {
     folio: string;
@@ -41,21 +42,20 @@ export const AdvancedFilters = ({ onFilter }: { onFilter: (filters: Filters) => 
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <input
+
+                <InputField
                     type="text"
-                    placeholder="Buscar por folio..."
+                    label="Buscar por folio"
                     value={filters.folio}
-                    onChange={(e) => handleFilterChange("folio", e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onChange={(e => handleFilterChange("folio", e.target.value))}
                 />
 
-                <input
+                <InputField
                     type="text"
-                    placeholder="Buscar por número de parte..."
-                    value={filters.partNumber}
+                    label="Buscar por número de parte"
                     onChange={(e) => handleFilterChange("partNumber", e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+
             </div>
         </div>
     );
