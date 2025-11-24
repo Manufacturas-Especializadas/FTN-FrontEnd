@@ -40,13 +40,13 @@ const InputField = React.forwardRef<HTMLInputElement, InputFieldProps>(
 
                         /* top-0.5 para subirlo un poco más ya que el input es más chico */
                         top-0.5 
-                        text-[10px] /* Texto un poco más chico al flotar */
+                        text-[10px]
                         scale-100 
                         -translate-y-0
 
                         peer-placeholder-shown:top-1/2 
                         peer-placeholder-shown:-translate-y-1/2 
-                        peer-placeholder-shown:text-sm /* Tamaño normal cuando está en el centro */
+                        peer-placeholder-shown:text-sm
                         peer-placeholder-shown:font-normal
                         peer-placeholder-shown:text-gray-400
 
