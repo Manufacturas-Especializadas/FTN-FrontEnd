@@ -1,31 +1,9 @@
 import { useState } from "react";
 import { ftnService } from "../api/services/FtnService";
-import type { Folio } from "../types/Folio";
+import type { FolioSearch, FolioEntrance, PartNumberDto, FolioSearchResponse } from "../api/services/FtnService";
 
-export interface PartNumberDetail {
-    partNumber: string;
-    quantity: number;
-};
+export type { FolioSearch, FolioEntrance, PartNumberDto };
 
-export interface FolioWithDetails extends Folio {
-    partNumbers?: PartNumberDetail[];
-};
-
-export interface SearchResult {
-    partNumber: string;
-    totalPlatforms: number;
-    totalPieces: number;
-    folios: FolioWithDetails[];
-};
-
-export interface ApiSearchResponse {
-    partNumber?: string;
-    totalPlatforms?: number;
-    totalPieces?: number;
-    folios?: FolioWithDetails[] | SearchResult;
-};
-
-// Corregir la interfaz ProcessExitResult
 export interface ProcessExitResult {
     success: boolean;
     message: string;
@@ -46,65 +24,55 @@ export interface SelectedItem {
     quantity: number;
     maxQuantity: number;
     isPlatforms: boolean;
-}
+};
+
+export interface AccumulatedPartNumbers {
+    [partNumber: string]: number;
+};
 
 export const useStageExits = () => {
-    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [searchResults, setSearchResults] = useState<FolioSearch[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+    const [accumulatedPartNumbers, setAccumulatedPartNumbers] = useState<AccumulatedPartNumbers>({});
 
-    const searchByPartNumber = async (partNumber: string) => {
-        if (!partNumber.trim()) {
+    const searchByFolio = async (folioNumber: string) => {
+        if (!folioNumber.trim()) {
             setSearchResults([]);
+            setAccumulatedPartNumbers({});
             return;
         }
 
         setLoading(true);
         setError(null);
         setSelectedItems([]);
+        setAccumulatedPartNumbers({});
 
         try {
-            const results = await ftnService.searchByPartNumber(partNumber);
-            const normalizedResults = Array.isArray(results) ? results : [results];
+            const folioNum = parseInt(folioNumber);
+            if (isNaN(folioNum)) {
+                setError('Por favor ingresa un número de folio válido');
+                return;
+            }
 
-            const processedResults = normalizedResults.map(result => {
-                const foliosWithDetails: FolioWithDetails[] = (result.folios || []).map((folio: any) => {
-                    let partNumbers: PartNumberDetail[] = [];
+            const response: FolioSearchResponse = await ftnService.searchByFolio(folioNum);
 
-                    if (folio.partNumber && folio.numberOfPieces) {
-                        const partNumbersArray = folio.partNumber.split(',').map((p: string) => p.trim()).filter((p: string) => p !== "");
+            const folioResults = response.folioResults || [];
+            const accumulatedFromAPI = response.accumulatedPartNumbers || [];
 
-                        if (partNumbersArray.length > 0) {
-                            const quantityPerPart = Math.floor(folio.numberOfPieces / partNumbersArray.length);
-                            partNumbers = partNumbersArray.map((part: string) => ({
-                                partNumber: part,
-                                quantity: quantityPerPart
-                            }));
-                        } else {
-                            partNumbers = [{
-                                partNumber: folio.partNumber,
-                                quantity: folio.numberOfPieces
-                            }];
-                        }
-                    }
-
-                    return {
-                        ...folio,
-                        partNumbers: partNumbers
-                    };
-                });
-
-                return {
-                    ...result,
-                    folios: foliosWithDetails
-                };
+            const accumulatedMap: AccumulatedPartNumbers = {};
+            accumulatedFromAPI.forEach(item => {
+                if (item.partNumber && item.totalQuantity) {
+                    accumulatedMap[item.partNumber] = item.totalQuantity;
+                }
             });
 
-            setSearchResults(processedResults);
+            setSearchResults(folioResults);
+            setAccumulatedPartNumbers(accumulatedMap);
         } catch (err) {
-            setError('Error al buscar el número de parte');
-            console.error('Search error:', err);
+            console.error('Error completo en searchByFolio:', err);
+            setError('Error al buscar el folio');
         } finally {
             setLoading(false);
         }
@@ -150,7 +118,11 @@ export const useStageExits = () => {
 
             if (result.success) {
                 setSelectedItems([]);
-                setSearchResults([]);
+
+                if (searchResults.length > 0) {
+                    const currentFolio = searchResults[0].folio.toString();
+                    await searchByFolio(currentFolio);
+                }
 
                 return {
                     success: true,
@@ -177,6 +149,7 @@ export const useStageExits = () => {
         setSearchResults([]);
         setSelectedItems([]);
         setError(null);
+        setAccumulatedPartNumbers({});
     };
 
     const getTotalSelected = () => {
@@ -190,16 +163,28 @@ export const useStageExits = () => {
         return item ? item.quantity : 0;
     };
 
+    const getPartNumberQuantity = (partNumber: string): number => {
+        return accumulatedPartNumbers[partNumber] || 0;
+    };
+
+    const isEntranceCompleted = (entrance: FolioEntrance): boolean => {
+        if (!entrance) return true;
+        return (entrance.platforms ?? 0) === 0 || !!entrance.exitDate;
+    };
+
     return {
         searchResults,
         loading,
         error,
         selectedItems,
-        searchByPartNumber,
+        accumulatedPartNumbers,
+        searchByFolio,
         updateSelectedQuantity,
         processExit,
         clearSearch,
         getTotalSelected,
-        getSelectedQuantity
+        getSelectedQuantity,
+        getPartNumberQuantity,
+        isEntranceCompleted
     };
 };

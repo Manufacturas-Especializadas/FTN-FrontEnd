@@ -1,5 +1,5 @@
 import { API_CONFIG } from "../../config/api";
-import type { SearchResult } from "../../hooks/useStageExits";
+import type { SearchResult } from "../../hooks/useFtnExitForm";
 import type { StageEntrance } from "../../types/StageEntrance";
 import { apiClient } from "../client";
 
@@ -25,6 +25,14 @@ export interface FtnResponse {
     idStageEntrances?: number;
     IdModified?: number;
 };
+
+export interface FolioSearchResponse {
+    folioResults: FolioSearch[];
+    accumulatedPartNumbers: Array<{
+        partNumber: string;
+        totalQuantity: number;
+    }>;
+}
 
 export interface ProcessExitsRequest {
     ExitItem: Array<{
@@ -76,9 +84,29 @@ export interface RecordDetail {
     totalCost: number;
 };
 
+export interface FolioSearch {
+    folio: number;
+    entrances: FolioEntrance[];
+    totalPlatforms: number;
+    totalPieces: number;
+};
+
+export interface FolioEntrance {
+    folio: number;
+    platforms: number;
+    totalPieces: number;
+    entryDate: string;
+    exitDate?: string;
+    partNumbers: Array<{
+        partNumber: string;
+        quantity: number;
+    }>
+};
+
 class FtnService {
     private getStageEntranceEndpoint = API_CONFIG.endpoints.ftn.getStageEntrance;
     private searchByPartNumberEndpoint = API_CONFIG.endpoints.ftn.searchByPartNumber;
+    private searchByFolioEndpoint = API_CONFIG.endpoints.ftn.serchByFolio;
     private processExitsEndpoint = API_CONFIG.endpoints.ftn.processExits;
     private createEndpoint = API_CONFIG.endpoints.ftn.create;
     private updateEndpoint = API_CONFIG.endpoints.ftn.update;
@@ -91,6 +119,10 @@ class FtnService {
 
     async searchByPartNumber(partNumber: string): Promise<SearchResult[]> {
         return apiClient.get<SearchResult[]>(`${this.searchByPartNumberEndpoint}${encodeURIComponent(partNumber)}`);
+    };
+
+    async searchByFolio(folio: number): Promise<FolioSearchResponse> {
+        return apiClient.get<FolioSearchResponse>(`${this.searchByFolioEndpoint}${folio}`);
     };
 
     async processExits(exitItems: Array<{ folio: number; partNumber: string; quantity: number }>): Promise<ProcessExitsResponse> {
