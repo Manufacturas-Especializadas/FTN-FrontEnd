@@ -9,8 +9,10 @@ export const API_CONFIG = {
     endpoints: {
         ftn: {
             getStageEntrance: "/api/StageEntrance/GetStageEntrances",
+            avaibleReports: "/api/StageEntrance/Available-Reports",
             searchByPartNumber: "/api/StageEntrance/SearchByPartNumber/",
             serchByFolio: "/api/StageEntrance/SearchByFolio/",
+            downloadReport: "/api/StageEntrance/DownloadMonthlyReport/",
             processExits: "/api/StageEntrance/ProcessExits",
             create: "/api/StageEntrance/Create",
             update: "/api/StageEntrance/Update/",
