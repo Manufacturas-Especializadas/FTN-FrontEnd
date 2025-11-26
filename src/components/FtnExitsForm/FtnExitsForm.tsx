@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStageExits } from "../../hooks/useStageExits";
-import type { FolioSearch, FolioEntrance, PartNumberDto } from "../../hooks/useStageExits";
+import type { FolioSearch, FolioEntrance, PartNumberDto, SelectedItem } from "../../hooks/useStageExits";
 import InputField from "../Inputs/InputField";
 import FormButton from "../Inputs/FormButton";
 
@@ -10,13 +10,9 @@ export const FtnExitsForm = () => {
         searchResults,
         loading,
         error,
-        selectedItems,
         searchByFolio,
-        updateSelectedQuantity,
         processExit,
         clearSearch,
-        getTotalSelected,
-        getSelectedQuantity,
         getPartNumberQuantity,
         isEntranceCompleted
     } = useStageExits();
@@ -26,23 +22,16 @@ export const FtnExitsForm = () => {
         searchByFolio(searchTerm);
     };
 
-    const handleQuantityChange = (folioId: number, partNumber: string, max: number, value: string, isPlatforms: boolean = false) => {
-        if (value === "") {
-            updateSelectedQuantity(folioId, partNumber, 0, max, isPlatforms);
-            return;
-        }
+    const handleProcessExit = async (folioId: number, maxPlatforms: number) => {
+        const exitItem: SelectedItem = {
+            folio: folioId,
+            partNumber: `TARIMAS-${folioId}`,
+            quantity: 1,
+            maxQuantity: maxPlatforms,
+            isPlatforms: true
+        };
 
-        const quantity = Number(value);
-
-        if (!Number.isInteger(quantity)) return;
-        if (quantity < 0) return;
-        if (quantity > max) return;
-
-        updateSelectedQuantity(folioId, partNumber, quantity, max, isPlatforms);
-    };
-
-    const handleProcessExit = async () => {
-        const result = await processExit(selectedItems);
+        const result = await processExit([exitItem]);
 
         if (result?.success) {
             if (result.details && result.details.length > 0) {
@@ -79,13 +68,6 @@ export const FtnExitsForm = () => {
         }
     };
 
-    const handleCancel = () => {
-        setSearchTerm("");
-        clearSearch();
-    };
-
-    const totalSelected = getTotalSelected();
-
     const AlertMessage = ({ message, type }: { message: string; type: 'success' | 'error' }) => (
         <div className={`p-3 ${type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'} border rounded-lg`}>
             <p className={`text-sm ${type === 'success' ? 'text-green-800' : 'text-red-800'}`}>
@@ -93,16 +75,6 @@ export const FtnExitsForm = () => {
             </p>
         </div>
     );
-
-    const getSelectionSummary = () => {
-        const platforms = selectedItems.filter(item => item.isPlatforms);
-        return {
-            totalPlatforms: platforms.reduce((sum, item) => sum + item.quantity, 0),
-            platformItems: platforms.length
-        };
-    };
-
-    const selectionSummary = getSelectionSummary();
 
     const calculateEntrancePieces = (entrance: FolioEntrance): number => {
         if (!entrance || !Array.isArray(entrance.partNumbers)) return entrance?.totalPieces || 0;
@@ -223,33 +195,28 @@ export const FtnExitsForm = () => {
                                             {entrance?.exitDate && ` • Salida: ${new Date(entrance.exitDate).toLocaleDateString('es-MX')}`}
                                         </div>
 
-                                        {!isCompleted && (
+                                        {!isCompleted && remainingPlatforms > 0 && (
                                             <div className="space-y-4">
                                                 <div className="bg-white p-3 rounded border">
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <label className="font-medium text-gray-800">Sacar tarimas</label>
+                                                            <label className="font-medium text-gray-800">Sacar tarima</label>
                                                             <div className="text-xs text-gray-500 mt-1">
-                                                                Al sacar tarimas se descontarán automáticamente las piezas de todos los folios
+                                                                Al sacar la tarima se descontarán automáticamente las piezas correspondientes
                                                             </div>
                                                             <div className="text-xs text-gray-500 mt-1">
                                                                 Tarimas disponibles: {remainingPlatforms}
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <input
-                                                                type="number"
-                                                                min={0}
-                                                                max={remainingPlatforms}
-                                                                value={getSelectedQuantity(entrance.folio, `TARIMAS-${entrance.folio}`, true)}
-                                                                onChange={(e) => {
-                                                                    handleQuantityChange(entrance.folio, `TARIMAS-${entrance.folio}`, remainingPlatforms, e.target.value, true);
-                                                                }}
-                                                                className="w-20 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
-                                                                placeholder="0"
-                                                            />
-                                                            <span className="text-sm text-gray-500">/ {remainingPlatforms}</span>
-                                                        </div>
+                                                        <FormButton
+                                                            variant="primary"
+                                                            onClick={() => handleProcessExit(entrance.folio, remainingPlatforms)}
+                                                            loading={loading}
+                                                            disabled={loading}
+                                                            className="px-4 py-2"
+                                                        >
+                                                            Sacar tarima
+                                                        </FormButton>
                                                     </div>
                                                 </div>
 
@@ -278,6 +245,14 @@ export const FtnExitsForm = () => {
                                                 )}
                                             </div>
                                         )}
+
+                                        {!isCompleted && remainingPlatforms === 0 && (
+                                            <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                                                <p className="text-sm text-yellow-800 text-center">
+                                                    No hay tarimas disponibles para sacar
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
@@ -285,58 +260,6 @@ export const FtnExitsForm = () => {
                     </div>
                 ))}
             </div>
-
-            {totalSelected > 0 && (
-                <div className="border-t border-gray-200 pt-4 space-y-4">
-                    <div className="flex justify-between items-center">
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-gray-700">
-                                Total seleccionado:
-                                <span className="text-blue-600 ml-1">
-                                    {selectionSummary.totalPlatforms} tarimas
-                                </span>
-                            </p>
-                            <p className="text-xs text-gray-500">
-                                Al registrar la salida, se descontarán automáticamente las piezas de todos los folios
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                        <p className="text-sm font-medium text-blue-800 mb-2">Detalle de selección:</p>
-                        <div className="space-y-1 max-h-32 overflow-y-auto">
-                            {selectedItems.map((item, index) => (
-                                <div key={index} className="flex justify-between text-sm text-blue-700">
-                                    <span>
-                                        Folio {item.folio} - Tarimas
-                                    </span>
-                                    <span>{item.quantity} tarimas</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                        <FormButton
-                            variant="secondary"
-                            onClick={handleCancel}
-                            disabled={loading}
-                            className="flex-1"
-                        >
-                            Cancelar
-                        </FormButton>
-                        <FormButton
-                            variant="primary"
-                            onClick={handleProcessExit}
-                            loading={loading}
-                            disabled={loading}
-                            className="flex-1"
-                        >
-                            Registrar salida
-                        </FormButton>
-                    </div>
-                </div>
-            )}
 
             {!searchTerm && searchResults.length === 0 && (
                 <div className="text-center py-8 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
