@@ -13,6 +13,7 @@ export const API_CONFIG = {
             searchByPartNumber: "/api/StageEntrance/SearchByPartNumber/",
             serchByFolio: "/api/StageEntrance/SearchByFolio/",
             downloadReport: "/api/StageEntrance/DownloadMonthlyReport/",
+            monthlyReportByRange: "/api/StageEntrance/MonthlyReportByRange",
             processExits: "/api/StageEntrance/ProcessExits",
             create: "/api/StageEntrance/Create",
             update: "/api/StageEntrance/Update/",

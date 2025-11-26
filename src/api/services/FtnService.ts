@@ -115,6 +115,7 @@ class FtnService {
     private searchByPartNumberEndpoint = API_CONFIG.endpoints.ftn.searchByPartNumber;
     private searchByFolioEndpoint = API_CONFIG.endpoints.ftn.serchByFolio;
     private downloadReportEndpoint = API_CONFIG.endpoints.ftn.downloadReport;
+    private monthlyReportByRangeEndpoint = API_CONFIG.endpoints.ftn.monthlyReportByRange;
     private processExitsEndpoint = API_CONFIG.endpoints.ftn.processExits;
     private createEndpoint = API_CONFIG.endpoints.ftn.create;
     private updateEndpoint = API_CONFIG.endpoints.ftn.update;
@@ -144,6 +145,22 @@ class FtnService {
 
         return apiClient.downloadFile(endpoint, filename);
     };
+
+    async downloadReportByDateRange(startDate: string, endDate: string): Promise<void> {
+        const requestData = {
+            startDate,
+            endDate
+        };
+
+        const filename = `Reporte_${startDate}_a_${endDate}.xlsx`;
+
+        return apiClient.downloadFile(
+            this.monthlyReportByRangeEndpoint,
+            filename,
+            requestData
+        );
+    };
+
 
     async processExits(exitItems: Array<{ folio: number; partNumber: string; quantity: number }>): Promise<ProcessExitsResponse> {
         const request: ProcessExitsRequest = {

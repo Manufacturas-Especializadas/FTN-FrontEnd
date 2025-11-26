@@ -24,7 +24,7 @@ export const ReportsTable = () => {
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
             <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-800">
-                    Reportes Mensuales Disponibles
+                    Reportes mensuales disponibles
                 </h2>
             </div>
 
