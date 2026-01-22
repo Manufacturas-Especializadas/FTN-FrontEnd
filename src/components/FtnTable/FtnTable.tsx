@@ -56,7 +56,7 @@ export const FtnTable = ({ data, onDelete, onEdit }: Props) => {
     startDeleting();
 
     try {
-      await ftnService.delete();
+      await ftnService.delete(deleteModal.plattaform.id!);
       closeDeleteModal();
 
       if (onDelete) {
